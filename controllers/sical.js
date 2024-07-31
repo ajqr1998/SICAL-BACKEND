@@ -26,6 +26,21 @@ var controller = {
             return res.status(500).send({error: error.message});
         }
     },
+    getPersonal: async function(req, res){
+        try {
+            const personal = await baseBodega('PERSONAL').select().all();
+            const map_personal = personal.map(record => {
+                return {
+                    ID: record.id,
+                    PERSONAL: record.fields.PERSONAL
+                };
+            });
+            return res.status(200).send(map_personal);
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
     getSubproyectos: async function(req, res){
         try {
             const proyecto = req.body.PROYECTO;
@@ -126,6 +141,20 @@ var controller = {
             const insumosCotizacion =  req.body.insumosCotizacion;
             const insumosAdicionales =  req.body.insumosAdicionales;
             const insumosNuevos =  req.body.insumosNuevos;
+            const insumosNuevosIds = [];
+
+            const insNuevosProductos = await Promise.all(insumosNuevos.map(async (insumo) => {
+                const record = await baseProductos('INSUMOS').create({
+                    DESCRIPCION: insumo.fields.DESCRIPCION,
+                    NUEVO: true,
+                });
+                return {
+                    id: record.id,
+                    cantidad: insumo.fields.COMPRA
+                };
+            }));
+
+            
 
             // Crear el pedido
             const createdPedido = await baseBodega('PEDIDOS').create(pedidoData);
@@ -147,17 +176,34 @@ var controller = {
                 });
             };
 
-            // Crear insumos nuevos
-            for (const insumo of insumosNuevos) {
-                await baseBodega('INSUMOS_NUEVOS').create({
-                    ...insumo.fields,
+            const insNuevosBodega = await Promise.all(insNuevosProductos.map(async (insumo) => {
+                let record = undefined;
+                while(record === undefined){
+                    const records = await baseBodega('INSUMOS').select({
+                        filterByFormula: `{RECORD_ID_PRODUCTOS} = "${insumo.id}"`
+                    }).all();
+                    if (records.length > 0) {
+                        record = records[0];
+                    } else {
+                        record = undefined;
+                    }
+                }
+                return {
+                    id: record.id,
+                    cantidad: insumo.cantidad
+                };
+            }));
+
+            //Crear insumos adicionales (insumos que son nuevos)
+            for (const insumo of insNuevosBodega) {
+                await baseBodega('INSUMOS_ADICIONAL').create({
+                    INSUMO: [insumo.id],
+                    CANTIDAD: insumo.cantidad,
                     PEDIDO: [createdPedido.id] // Relacionar con el pedido creado
                 });
             };
-
             return res.status(200).send({id: createdPedido.id, codigo:createdPedido.fields.PEDIDO});
 
-            
         } catch (error) {
             console.log(error);
             return res.status(500).send(error);
@@ -167,7 +213,6 @@ var controller = {
     getPedido: async function(req, res){
         try {
             const id = req.params.id;
-            console.log(id);
 
             const pedido = await baseBodega('PEDIDOS').find(id);
 
@@ -184,20 +229,6 @@ var controller = {
                 }
             });
 
-            const ins_new = await baseBodega('INSUMOS_NUEVOS').select({
-                filterByFormula: `{PEDIDO} = "${pedido.fields.PEDIDO}"`
-            }).all();
-
-            const map_ins_new = ins_new.map(record => {
-                return {
-                    ID: record.id,
-                    DESCRIPCION: record.fields.DESCRIPCION,
-                    CANTIDAD: record.fields.COMPRA,
-                    PROVEEDOR: record.fields.PROVEEDOR,
-                    MODELO: record.fields.MODELO,
-                    MARCA: record.fields.MARCA,
-                }
-            });
 
             const ins_adi = await baseBodega('INSUMOS_ADICIONAL').select({
                 filterByFormula: `{PEDIDO} = "${pedido.fields.PEDIDO}"`
@@ -219,9 +250,10 @@ var controller = {
                 OP: pedido.fields.OP,
                 PEDIDO: pedido.fields.PEDIDO,
                 INS_COT: map_ins_cot,
-                INS_NEW: map_ins_new,
                 INS_ADI: map_ins_adi,
                 FECHA_PEDIDO: pedido.fields.FECHA_PEDIDO,
+                TIPO: pedido.fields.TIPO,
+                SOLICITANTE_VALUE: pedido.fields.SOLICITANTE_VALUE,
             }
 
             return res.status(200).send(pedido_send);
@@ -233,8 +265,6 @@ var controller = {
     getOrdenCompra : async function(req, res){
         try {
             const id = req.params.id;
-            console.log(id);
-
             const orden = await baseCompras('ORDEN_COMPRA').find(id);
             
             const insumos = await baseCompras('INSUMOS').select({
@@ -248,6 +278,7 @@ var controller = {
                     CANTIDAD: record.fields.COMPRA,
                     PVP: record.fields.PVP,
                     PRECIO_TOTAL: record.fields.PRECIO_TOTAL,
+                    COD_PROV: record.fields.COD_PROV
                 }
             });
 
@@ -257,7 +288,12 @@ var controller = {
                 PROVEEDOR: orden.fields.PROVEEDOR,
                 FECHA: orden.fields.CRATED,
                 INSUMOS: map_insumos,
-                TOTAL: orden.fields.TOTAL
+                SUBTOTAL: orden.fields.SUBTOTAL,
+                IVA: orden.fields.IVA,
+                TOTAL: orden.fields.TOTAL,
+                TIPO: orden.fields.TIPO,
+                COMENTARIOS: orden.fields.COMENTARIOS,
+                RESPONSABLE_SUBPROYECTO: orden.fields.RESPONSABLE_SUBPROYECTO,
             }
     
             return res.status(200).send(map_orden);
