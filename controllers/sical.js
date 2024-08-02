@@ -301,6 +301,51 @@ var controller = {
             console.log(error);
             return res.status(500).send({error: error.message});
         }
+    },
+    getPedidoByCodigo: async function(req, res){
+        try {
+            const codigo = req.body.CODIGO;
+            console.log(codigo);
+            const orden = await baseBodega('PEDIDOS').select({
+                filterByFormula: `{PEDIDO} = "${codigo}"`
+            }).all();
+
+            if (orden.length === 0) {
+                return res.status(404).send({error: "Pedido no encontrado"});
+            }
+
+            console.log(orden);
+
+            const pedidoId = orden[0].id;
+            return res.status(200).send({ID: pedidoId});
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
+    updatePedido: async function(req, res){
+        try {
+
+            const insCot = req.body.insCot;
+            const insAdi = req.body.insAdi;
+
+            for (const insumo of insCot) {
+                await baseBodega('INSUMOS_COT_PEDIDO').update(insumo.ID, {
+                    CANT_ESP: insumo.CANTIDAD
+                });
+            }
+
+            for (const insumo of insAdi) {
+                await baseBodega('INSUMOS_ADICIONAL').update(insumo.ID, {
+                    CANTIDAD: insumo.CANTIDAD
+                });
+            }
+            
+            return res.status(200).send({message: "Pedido actualizado"});
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
     }
 }
 

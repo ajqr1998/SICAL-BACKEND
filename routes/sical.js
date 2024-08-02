@@ -34,6 +34,12 @@ router.get('/orden-compra/:id', SicalContoller.getOrdenCompra);
 //Obtener el personal de SICAL
 router.get('/personal', SicalContoller.getPersonal);
 
+//Obtener pedido por codigo
+router.post('/pedido', SicalContoller.getPedidoByCodigo);
+
+//Update pedido
+router.put('/pedido', SicalContoller.updatePedido);
+
 
 
 module.exports = router;
