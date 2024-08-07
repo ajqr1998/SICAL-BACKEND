@@ -9,10 +9,152 @@ const baseBodega = Airtable.base(process.env.AIRTABLE_BASE_ID_BODEGA);
 const baseProyectos = Airtable.base(process.env.AIRTABLE_BASE_ID_PROYECTOS);
 const baseProductos = Airtable.base(process.env.AIRTABLE_BASE_ID_PRODUCTOS);
 const baseCompras = Airtable.base(process.env.AIRTABLE_BASE_ID_COMPRAS);
+const baseVentas = Airtable.base(process.env.AIRTABLE_BASE_ID_VENTAS);
 
 var controller = {
     home: function(req, res){
         return res.status(200).send("<h1>Hola desde el controllador</h1>" + " <h2>Esto es el home</h2>");
+    },
+    reporteVentas: async function(req, res){
+        try {
+            const ANIO = req.body.ANIO;
+            const MES = req.body.MES;
+            let registrosJson = [];
+
+            // Función para procesar cada página de registros
+            const fetchPage = async (page) => {
+                return new Promise((resolve, reject) => {
+                    page.eachPage(function page(records, fetchNextPage) {
+                        records.forEach(record => {
+                            const registro = {
+                                COTIZACION_APROBADA: record.get('COTIZACION_APROBADA_REPORTE'),
+                                NOMBRE_PRY: record.get('NOMBRE_PRY'),
+                                F_GANADA: record.get('F_GANADA'),
+                                PARTICIPANTES: record.get('PARTICIPANTES'),
+                                TOTAL_SIN_IVA: record.get('TOTAL_SIN_IVA'),
+                                RENTABILIDAD: record.get('RENTABILIDAD'),
+                                PARTICIPACION: record.get('PARTICIPACION'),
+                                TOTAL_PARTICIPACION: record.get('TOTAL_PARTICIPACION'),
+                                PORCENTAJE_COMISION: record.get('PORCENTAJE_COMISION'),
+                                COMISION_VENTAS: record.get('COMISION_VENTAS'),
+                                ESTADO_COMISION_VENTAS: record.get('ESTADO_COMISION_VENTAS'),
+                                ESTADO: record.get('ESTADO'),
+                                COTIZADOR: record.get('COTIZADOR_REPORTE'),
+                            };
+                            registrosJson.push(registro);
+                        });
+                        fetchNextPage();
+                    }, function done(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            };
+
+            // Espera a que todas las páginas sean procesadas
+            await fetchPage(baseVentas('COMISIONES').select({
+                filterByFormula: `AND({MES} = ${MES}, {ANIO} = ${ANIO}, {ETAPA} = '05 - ASIGNACION', FIND('APROBADO', {ESTADO_COTIZACION}))`
+            }));
+
+            let agrupacionTemporal = {};
+
+            // Itera sobre registrosJson para agrupar las cotizaciones
+            registrosJson.forEach(registro => {
+                const cotizador = registro.COTIZADOR;
+                if (!agrupacionTemporal[cotizador]) {
+                    agrupacionTemporal[cotizador] = [];
+                }
+                agrupacionTemporal[cotizador].push(registro);
+            });
+
+            // Convierte el objeto agrupacionTemporal en el arreglo deseado
+            let resultado = Object.keys(agrupacionTemporal).map(cotizador => {
+                return {
+                    COTIZADOR: cotizador,
+                    COMISIONES: agrupacionTemporal[cotizador]
+                };
+            });
+
+            // Devuelve la respuesta exitosa
+            return res.status(200).send(resultado);
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
+    reporteProyectos: async function(req, res){
+        try {
+            const ANIO = req.body.ANIO;
+            const MES = req.body.MES;
+            let registrosJson = [];
+
+            // Función para procesar cada página de registros
+            const fetchPage = async (page) => {
+                return new Promise((resolve, reject) => {
+                    page.eachPage(function page(records, fetchNextPage) {
+                        records.forEach(record => {
+                            const registro = {
+                                PROYECTOS: record.get('PROYECTOS_REPORTE'),
+                                SUBPROYECTO: record.get('SUBPROYECTO'),
+                                AREA: record.get('AREA_REPORTE'),
+                                TOTAL_SIN_IVA_SUBPRY: record.get('TOTAL_SIN_IVA_SUBPRY'),
+                                RENTABILIDAD_VENTAS: record.get('RENTABILIDAD_VENTAS'),
+                                RENTABILIDAD_MINIMA: record.get('RENTABILIDAD_MINIMA'),
+                                RENTABILIDAD_PROYECTO: record.get('RENTABILIDAD_PROYECTO'),
+                                VALIDAR_RENTABILIDAD: record.get('VALIDAR_RENTABILIDAD'),
+                                PORCENTAJE_PARTICIPACION: record.get('PORCENTAJE_PARTICIPACION'),
+                                PORCENTAJE_COMISION: record.get('PORCENTAJE_COMISION'),
+                                PORCENTAJE_FINAL_COMISION: record.get('PORCENTAJE_FINAL_COMISION'),
+                                COMISION_SUBPRY: record.get('COMISION_SUBPRY'),
+                                ETAPA_PROYECTO: record.get('ETAPA_PROYECTO'),
+                                F_CIERRE_PROYECTO: record.get('F_CIERRE_PROYECTO'),
+                                ESTADO_SUBPROYECTO: record.get('ESTADO_SUBPROYECTO'),
+                                PRY_CERRADO: record.get('PRY_CERRADO'),
+                                ESTADO_COMISION_PROYECTOS: record.get('ESTADO_COMISION_PROYECTOS'),
+                                ESTADO_ACTIVIDADES: record.get('ESTADO_ACTIVIDADES'),
+                                RESPONSABLE: record.get('RESPONSABLE_SPRY_REPORTE')
+                            };
+                            registrosJson.push(registro);
+                        });
+                        fetchNextPage();
+                    }, function done(err) {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            };
+
+            // Espera a que todas las páginas sean procesadas
+            await fetchPage(baseProyectos('SUBPROYECTOS').select({
+                filterByFormula: `AND({MES} = ${MES}, {ANIO} = ${ANIO}, {ETAPA_PROYECTO} = '04 - CIERRE')`
+            }));
+
+            let agrupacionTemporal = {};
+
+             // Itera sobre registrosJson para agrupar las cotizaciones
+            registrosJson.forEach(registro => {
+                const responsable = registro.RESPONSABLE;
+                if (!agrupacionTemporal[responsable]) {
+                    agrupacionTemporal[responsable] = [];
+                }
+                agrupacionTemporal[responsable].push(registro);
+            });
+
+            // Convierte el objeto agrupacionTemporal en el arreglo deseado
+            let resultado = Object.keys(agrupacionTemporal).map(responsable => {
+                return {
+                    RESPONSABLE: responsable ,
+                    SUBPROYECTOS: agrupacionTemporal[responsable ]
+                };
+            });
+
+            // Devuelve la respuesta exitosa
+            return res.status(200).send(resultado);
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
     },
     getProyectos: async function(req, res){
         try {
@@ -124,7 +266,7 @@ var controller = {
     },
     getProveedores: async function(req, res){
         try {
-            const proveedores = await baseProductos('PROVEEDORES').select().all();
+            const proveedores = await baseBodega('PROVEEDORES').select().all();
             const map_proveedores = proveedores.map(record => {
                 return record.fields.PROVEEDOR;
             });
@@ -144,21 +286,20 @@ var controller = {
             const insumosNuevosIds = [];
 
             const insNuevosProductos = await Promise.all(insumosNuevos.map(async (insumo) => {
-                const record = await baseProductos('INSUMOS').create({
+                const record = await baseBodega('INSUMOS').create({
                     DESCRIPCION: insumo.fields.DESCRIPCION,
                     NUEVO: true,
-                });
+                    MODELO: insumo.fields.MODELO,
+                    MARCA: insumo.fields.MARCA,
+                },{typecast: true});
                 return {
                     id: record.id,
                     cantidad: insumo.fields.COMPRA
                 };
             }));
 
-            
-
             // Crear el pedido
             const createdPedido = await baseBodega('PEDIDOS').create(pedidoData);
-            console.log(createdPedido.id);
 
             // Crear insumos de cotización
             for (const insumo of insumosCotizacion) {
@@ -176,32 +317,41 @@ var controller = {
                 });
             };
 
-            const insNuevosBodega = await Promise.all(insNuevosProductos.map(async (insumo) => {
-                let record = undefined;
-                while(record === undefined){
-                    const records = await baseBodega('INSUMOS').select({
-                        filterByFormula: `{RECORD_ID_PRODUCTOS} = "${insumo.id}"`
-                    }).all();
-                    if (records.length > 0) {
-                        record = records[0];
-                    } else {
-                        record = undefined;
-                    }
-                }
-                return {
-                    id: record.id,
-                    cantidad: insumo.cantidad
-                };
-            }));
-
             //Crear insumos adicionales (insumos que son nuevos)
-            for (const insumo of insNuevosBodega) {
+            for (const insumo of insNuevosProductos){
                 await baseBodega('INSUMOS_ADICIONAL').create({
                     INSUMO: [insumo.id],
                     CANTIDAD: insumo.cantidad,
                     PEDIDO: [createdPedido.id] // Relacionar con el pedido creado
                 });
-            };
+            }
+
+            // const insNuevosBodega = await Promise.all(insNuevosProductos.map(async (insumo) => {
+            //     let record = undefined;
+            //     while(record === undefined){
+            //         const records = await baseBodega('INSUMOS').select({
+            //             filterByFormula: `{RECORD_ID_PRODUCTOS} = "${insumo.id}"`
+            //         }).all();
+            //         if (records.length > 0) {
+            //             record = records[0];
+            //         } else {
+            //             record = undefined;
+            //         }
+            //     }
+            //     return {
+            //         id: record.id,
+            //         cantidad: insumo.cantidad
+            //     };
+            // }));
+
+            // //Crear insumos adicionales (insumos que son nuevos)
+            // for (const insumo of insNuevosBodega) {
+            //     await baseBodega('INSUMOS_ADICIONAL').create({
+            //         INSUMO: [insumo.id],
+            //         CANTIDAD: insumo.cantidad,
+            //         PEDIDO: [createdPedido.id] // Relacionar con el pedido creado
+            //     });
+            // };
             return res.status(200).send({id: createdPedido.id, codigo:createdPedido.fields.PEDIDO});
 
         } catch (error) {

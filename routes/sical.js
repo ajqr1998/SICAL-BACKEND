@@ -6,6 +6,12 @@ var router = express.Router();
 //Home
 router.get('/', SicalContoller.home);
 
+//Obtener reportes enviando el año y el mes
+router.post('/reporte', SicalContoller.reporteVentas);
+
+//Obtener reportes de proyectos enviando el año y el mes
+router.post('/reporte-proyectos', SicalContoller.reporteProyectos);
+
 //Obtener todos los proyectos
 router.get('/proyectos', SicalContoller.getProyectos);
 
