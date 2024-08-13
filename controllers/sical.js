@@ -350,6 +350,7 @@ var controller = {
                     DESCRIPCION: record.fields.DESCRIPCION,
                     CANTIDAD: record.fields.CANT_ESP,
                     COD_PROV: record.fields.COD_PROV,
+
                 }
             });
 
@@ -378,7 +379,8 @@ var controller = {
                 FECHA_PEDIDO: pedido.fields.FECHA_PEDIDO,
                 TIPO: pedido.fields.TIPO,
                 SOLICITANTE_VALUE: pedido.fields.SOLICITANTE_VALUE,
-                NOMBRE_PRY: pedido.fields.NOMBRE_PRY
+                NOMBRE_PRY: pedido.fields.NOMBRE_PRY,
+                ESTADO_APROBACION: pedido.fields.ESTADO_APROBACION,
             }
 
             return res.status(200).send(pedido_send);
@@ -435,7 +437,7 @@ var controller = {
     getPedidoByCodigo: async function(req, res){
         try {
             const codigo = req.body.CODIGO;
-            console.log(codigo);
+
             const orden = await baseBodega('PEDIDOS').select({
                 filterByFormula: `{PEDIDO} = "${codigo}"`
             }).all();
@@ -444,7 +446,9 @@ var controller = {
                 return res.status(404).send({error: "Pedido no encontrado"});
             }
 
-            console.log(orden);
+            if(orden[0].fields.ESTADO_APROBACION !== 'REVISION'){
+                return res.status(400).send({error: "El pedido no se encuentra en estado de revisión"});
+            }
 
             const pedidoId = orden[0].id;
             return res.status(200).send({ID: pedidoId});
@@ -458,6 +462,11 @@ var controller = {
 
             const insCot = req.body.insCot;
             const insAdi = req.body.insAdi;
+            const pedidoId = req.body.pedidoId;
+
+            await baseBodega('PEDIDOS').update(pedidoId,{
+                ESTADO_APROBACION: 'PENDIENTE'
+            });
 
             for (const insumo of insCot) {
                 await baseBodega('INSUMOS_COT_PEDIDO').update(insumo.ID, {
