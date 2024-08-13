@@ -326,32 +326,6 @@ var controller = {
                 });
             }
 
-            // const insNuevosBodega = await Promise.all(insNuevosProductos.map(async (insumo) => {
-            //     let record = undefined;
-            //     while(record === undefined){
-            //         const records = await baseBodega('INSUMOS').select({
-            //             filterByFormula: `{RECORD_ID_PRODUCTOS} = "${insumo.id}"`
-            //         }).all();
-            //         if (records.length > 0) {
-            //             record = records[0];
-            //         } else {
-            //             record = undefined;
-            //         }
-            //     }
-            //     return {
-            //         id: record.id,
-            //         cantidad: insumo.cantidad
-            //     };
-            // }));
-
-            // //Crear insumos adicionales (insumos que son nuevos)
-            // for (const insumo of insNuevosBodega) {
-            //     await baseBodega('INSUMOS_ADICIONAL').create({
-            //         INSUMO: [insumo.id],
-            //         CANTIDAD: insumo.cantidad,
-            //         PEDIDO: [createdPedido.id] // Relacionar con el pedido creado
-            //     });
-            // };
             return res.status(200).send({id: createdPedido.id, codigo:createdPedido.fields.PEDIDO});
 
         } catch (error) {
@@ -404,6 +378,7 @@ var controller = {
                 FECHA_PEDIDO: pedido.fields.FECHA_PEDIDO,
                 TIPO: pedido.fields.TIPO,
                 SOLICITANTE_VALUE: pedido.fields.SOLICITANTE_VALUE,
+                NOMBRE_PRY: pedido.fields.NOMBRE_PRY
             }
 
             return res.status(200).send(pedido_send);
@@ -434,9 +409,13 @@ var controller = {
 
             const map_orden = {
                 ID: orden.id,
-                CODIGO: orden.fields.COD_BASE_PRY,
-                PROVEEDOR: orden.fields.PROVEEDOR,
-                FECHA: orden.fields.CRATED,
+                CODIGO: orden.fields.CODIGO,
+                PROVEEDOR: orden.fields.PROVEEDOR_TMP,
+                TELEFONO_PROV: orden.fields.TELEFONO_PROV,
+                RUC_PROV: orden.fields.RUC_PROV,
+                DIRECCION_PROV: orden.fields.DIRECCION_PROV,
+                CORREO_PROV: orden.fields.CORREO_PROV,
+                FECHA_EMISION: orden.fields.FECHA_EMISION,
                 INSUMOS: map_insumos,
                 SUBTOTAL: orden.fields.SUBTOTAL,
                 IVA: orden.fields.IVA,
@@ -444,6 +423,7 @@ var controller = {
                 TIPO: orden.fields.TIPO,
                 COMENTARIOS: orden.fields.COMENTARIOS,
                 RESPONSABLE_SUBPROYECTO: orden.fields.RESPONSABLE_SUBPROYECTO,
+
             }
     
             return res.status(200).send(map_orden);
