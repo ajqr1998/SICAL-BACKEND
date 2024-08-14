@@ -350,6 +350,7 @@ var controller = {
                     DESCRIPCION: record.fields.DESCRIPCION,
                     CANTIDAD: record.fields.CANT_ESP,
                     COD_PROV: record.fields.COD_PROV,
+                    COD_SICAL: record.fields.COD_SICAL
 
                 }
             });
@@ -360,11 +361,20 @@ var controller = {
             }).all();
 
             const map_ins_adi = ins_adi.map(record => {
+                let nuevo;
+                if(record.fields.NUEVO[0]){
+                    nuevo = record.fields.NUEVO[0];
+                } else {
+                    nuevo = false;
+                }
                 return {
                     ID: record.id,
                     DESCRIPCION: record.fields.DESCRIPCION,
                     CANTIDAD: record.fields.CANTIDAD,
                     COD_PROV: record.fields.COD_PROV,
+                    COD_SICAL: record.fields.COD_SICAL,
+                    NUEVO: nuevo,
+                    
                 }
             });
 
@@ -452,6 +462,28 @@ var controller = {
 
             const pedidoId = orden[0].id;
             return res.status(200).send({ID: pedidoId});
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
+    getPedidosBySolicitante: async function(req, res){
+        try {
+            const solicitante = req.body.SOLICITANTE;
+            const estado = 'REVISION';
+
+            const pedidos = await baseBodega('PEDIDOS').select({
+                filterByFormula: `AND({SOLICITANTE} = "${solicitante}", {ESTADO_APROBACION} = "${estado}")`
+            }).all();
+
+            const map_pedidos = pedidos.map(record => {
+                return {
+                    ID: record.id,
+                    PEDIDO: record.fields.PEDIDO,
+                }
+            });
+
+            return res.status(200).send(map_pedidos);
         } catch (error) {
             console.log(error);
             return res.status(500).send({error: error.message});

@@ -24,7 +24,6 @@ router.post('/inscot', SicalContoller.getInsCot);
 //Obtener los insumos adicionales para un proyecto
 router.post('/insadi', SicalContoller.getInsAdi);
 
-
 //Obtener un pedido
 router.get('/pedido/:id', SicalContoller.getPedido);  
 
@@ -40,8 +39,8 @@ router.get('/orden-compra/:id', SicalContoller.getOrdenCompra);
 //Obtener el personal de SICAL
 router.get('/personal', SicalContoller.getPersonal);
 
-//Obtener pedido por codigo
-router.post('/pedido', SicalContoller.getPedidoByCodigo);
+//Obtener pedidos por solicitante
+router.post('/pedido', SicalContoller.getPedidosBySolicitante);
 
 //Update pedido
 router.put('/pedido', SicalContoller.updatePedido);
