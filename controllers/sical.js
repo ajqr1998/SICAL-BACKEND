@@ -7,7 +7,6 @@ Airtable.configure({
 
 const baseBodega = Airtable.base(process.env.AIRTABLE_BASE_ID_BODEGA);
 const baseProyectos = Airtable.base(process.env.AIRTABLE_BASE_ID_PROYECTOS);
-const baseProductos = Airtable.base(process.env.AIRTABLE_BASE_ID_PRODUCTOS);
 const baseCompras = Airtable.base(process.env.AIRTABLE_BASE_ID_COMPRAS);
 const baseVentas = Airtable.base(process.env.AIRTABLE_BASE_ID_VENTAS);
 
@@ -204,14 +203,22 @@ var controller = {
     getInsCot: async function(req, res){
         try {
             const COD_BASE_PRY = req.body.COD_BASE_PRY;
-            const filterFormula = `FIND('${COD_BASE_PRY}', {COD_BASE_PRY})`;
-            const ins_cot = await baseBodega('INSUMOS_COT').select({
+            const ESTADO = true;
+            const filterFormula = `AND(FIND('${COD_BASE_PRY}', {COD_BASE_PRY}), {APROBADO_COT} = ${ESTADO ? 1 : 0})`;
+            const ins_cot = await baseVentas('DET_NIV2_MAT_INS').select({
                 filterByFormula: filterFormula
             }).all();
             const map_ins_cot = ins_cot.map(record => {
                 return {
-                    id: record.id,
-                    fields: record.fields
+                    id: record.fields.RECORD_ID_INSUMO && record.fields.RECORD_ID_INSUMO.length > 0 ? record.fields.RECORD_ID_INSUMO[0] : undefined,
+                    fields: {
+                        INSUMOS: record.fields.INSUMOS_TEXT,
+                        DESCRIPCION: record.fields.DESCRIPCION && record.fields.DESCRIPCION.length > 0 ? record.fields.DESCRIPCION[0] : undefined,
+                        CANT_ESP: record.fields.CANTIDAD,
+                        PROVEEDOR: record.fields.PROVEEDORES && record.fields.PROVEEDORES.length > 0 ? record.fields.PROVEEDORES[0] : undefined,
+                        PVP: record.fields.PVP,
+                        COD_PROV: record.fields.COD_PROV && record.fields.COD_PROV.length > 0 ? record.fields.COD_PROV[0] : undefined,
+                    }
                 }
             });
             return res.status(200).send(map_ins_cot);
@@ -291,6 +298,7 @@ var controller = {
                     NUEVO: true,
                     MODELO: insumo.fields.MODELO,
                     MARCA: insumo.fields.MARCA,
+                    PROVEEDORES: ['rec2eemRwcnv0zOza']
                 },{typecast: true});
                 return {
                     id: record.id,
@@ -303,7 +311,7 @@ var controller = {
 
             // Crear insumos de cotización
             for (const insumo of insumosCotizacion) {
-                await baseBodega('INSUMOS_COT_PEDIDO').create({
+                await baseBodega('INSUMOS_PEDIDOS').create({
                     ...insumo.fields,
                     PEDIDO: [createdPedido.id]
                 });
@@ -311,7 +319,7 @@ var controller = {
 
             // Crear insumos adicionales
             for (const insumo of insumosAdicionales) {
-                await baseBodega('INSUMOS_ADICIONAL').create({
+                await baseBodega('INSUMOS_PEDIDOS').create({
                     ...insumo.fields,
                     PEDIDO: [createdPedido.id] // Relacionar con el pedido creado
                 });
@@ -319,7 +327,7 @@ var controller = {
 
             //Crear insumos adicionales (insumos que son nuevos)
             for (const insumo of insNuevosProductos){
-                await baseBodega('INSUMOS_ADICIONAL').create({
+                await baseBodega('INSUMOS_PEDIDOS').create({
                     INSUMO: [insumo.id],
                     CANTIDAD: insumo.cantidad,
                     PEDIDO: [createdPedido.id] // Relacionar con el pedido creado
@@ -339,24 +347,9 @@ var controller = {
             const id = req.params.id;
 
             const pedido = await baseBodega('PEDIDOS').find(id);
+            console.log(pedido.fields);
 
-            const ins_cot = await baseBodega('INSUMOS_COT_PEDIDO').select({
-                filterByFormula: `{PEDIDO} = "${pedido.fields.PEDIDO}"`
-            }).all();
-
-            const map_ins_cot = ins_cot.map(record => {
-                return {
-                    ID: record.id,
-                    DESCRIPCION: record.fields.DESCRIPCION,
-                    CANTIDAD: record.fields.CANT_ESP,
-                    COD_PROV: record.fields.COD_PROV,
-                    COD_SICAL: record.fields.COD_SICAL
-
-                }
-            });
-
-
-            const ins_adi = await baseBodega('INSUMOS_ADICIONAL').select({
+            const ins_adi = await baseBodega('INSUMOS_PEDIDOS').select({
                 filterByFormula: `{PEDIDO} = "${pedido.fields.PEDIDO}"`
             }).all();
 
@@ -384,7 +377,6 @@ var controller = {
                 PROYECTO: pedido.fields.PROYECTOS,
                 OP: pedido.fields.OP,
                 PEDIDO: pedido.fields.PEDIDO,
-                INS_COT: map_ins_cot,
                 INS_ADI: map_ins_adi,
                 FECHA_PEDIDO: pedido.fields.FECHA_PEDIDO,
                 TIPO: pedido.fields.TIPO,
@@ -444,29 +436,6 @@ var controller = {
             return res.status(500).send({error: error.message});
         }
     },
-    getPedidoByCodigo: async function(req, res){
-        try {
-            const codigo = req.body.CODIGO;
-
-            const orden = await baseBodega('PEDIDOS').select({
-                filterByFormula: `{PEDIDO} = "${codigo}"`
-            }).all();
-
-            if (orden.length === 0) {
-                return res.status(404).send({error: "Pedido no encontrado"});
-            }
-
-            if(orden[0].fields.ESTADO_APROBACION !== 'REVISION'){
-                return res.status(400).send({error: "El pedido no se encuentra en estado de revisión"});
-            }
-
-            const pedidoId = orden[0].id;
-            return res.status(200).send({ID: pedidoId});
-        } catch (error) {
-            console.log(error);
-            return res.status(500).send({error: error.message});
-        }
-    },
     getPedidosBySolicitante: async function(req, res){
         try {
             const solicitante = req.body.SOLICITANTE;
@@ -492,7 +461,6 @@ var controller = {
     updatePedido: async function(req, res){
         try {
 
-            const insCot = req.body.insCot;
             const insAdi = req.body.insAdi;
             const pedidoId = req.body.pedidoId;
 
@@ -500,14 +468,8 @@ var controller = {
                 ESTADO_APROBACION: 'PENDIENTE'
             });
 
-            for (const insumo of insCot) {
-                await baseBodega('INSUMOS_COT_PEDIDO').update(insumo.ID, {
-                    CANT_ESP: insumo.CANTIDAD
-                });
-            }
-
             for (const insumo of insAdi) {
-                await baseBodega('INSUMOS_ADICIONAL').update(insumo.ID, {
+                await baseBodega('INSUMOS_PEDIDOS').update(insumo.ID, {
                     CANTIDAD: insumo.CANTIDAD
                 });
             }
@@ -517,7 +479,38 @@ var controller = {
             console.log(error);
             return res.status(500).send({error: error.message});
         }
-    }
+    },
+    CrearOrdenesCompra: async function(req, res){
+        try {
+            const ordenes = req.body.ordenes;
+            const insumos = req.body.insumos;
+
+            return res.status(200).send({message: "Ordenes de compra creadas"});
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
+    updateOrdenCompra: async function(req, res){
+        try {
+            const ordenId = req.params.id;
+
+            const proveedorRecords = await baseCompras('PROVEEDORES').select({
+                filterByFormula: `{PROVEEDOR} = 'SUMELEC'`
+            }).firstPage();
+
+            const proveedor = proveedorRecords[0].id;
+
+            await baseCompras('ORDEN_COMPRA').update(ordenId, {
+                PROVEEDOR: [proveedor]
+            });
+
+            return res.status(200).send({message: "Orden de compra actualizada"});
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
 }
 
 module.exports = controller;

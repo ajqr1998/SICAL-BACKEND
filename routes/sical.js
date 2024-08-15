@@ -45,6 +45,8 @@ router.post('/pedido', SicalContoller.getPedidosBySolicitante);
 //Update pedido
 router.put('/pedido', SicalContoller.updatePedido);
 
+//Update orden de compra por id como parametro
+router.put('/orden-compra/:id', SicalContoller.updateOrdenCompra);
 
 
 module.exports = router;
