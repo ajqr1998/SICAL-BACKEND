@@ -423,7 +423,7 @@ var controller = {
                 SUBTOTAL: orden.fields.SUBTOTAL,
                 IVA: orden.fields.IVA,
                 TOTAL: orden.fields.TOTAL,
-                TIPO: orden.fields.TIPO,
+                TIPO: orden.fields.TIPO_PEDIDO && orden.fields.TIPO_PEDIDO.length > 0 ? orden.fields.TIPO_PEDIDO[0] : undefined,
                 COMENTARIOS: orden.fields.COMENTARIOS,
                 RESPONSABLE_SUBPROYECTO: orden.fields.RESPONSABLE_SUBPROYECTO,
 
