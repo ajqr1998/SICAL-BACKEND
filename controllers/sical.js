@@ -298,7 +298,6 @@ var controller = {
                     NUEVO: true,
                     MODELO: insumo.fields.MODELO,
                     MARCA: insumo.fields.MARCA,
-                    PROVEEDORES: ['rec2eemRwcnv0zOza']
                 },{typecast: true});
                 return {
                     id: record.id,
@@ -511,6 +510,45 @@ var controller = {
             return res.status(500).send({error: error.message});
         }
     },
+    getPedidoOC: async function(req, res){
+        try {
+            const id = req.params.id;
+            const pedido = await baseCompras('PEDIDOS').find(id);
+
+            const insumos = await baseCompras('INSUMOS').select({
+                filterByFormula: `{PEDIDOS} = "${pedido.fields.PEDIDO}"`
+            }).all();
+
+            const map_insumos = insumos.map(record => {
+                return {
+                    ID: record.id,
+                    DESCRIPCION: record.fields.DESCRIPCION,
+                    CANTIDAD: record.fields.COMPRA,
+                    PVP: record.fields.PVP,
+                    PRECIO_TOTAL: record.fields.PRECIO_TOTAL,
+                    COD_PROV: record.fields.COD_PROV,
+                    PROVEEDOR: record.fields.PROVEEDOR
+                }
+            });
+
+            const pedido_send = {
+                ID: pedido.id,
+                PEDIDO: pedido.fields.PEDIDO,
+                NOMBRE_PRY: pedido.fields.NOMBRE_PRY,
+                PROYECTO: pedido.fields.PROYECTOS,
+                SUBPROYECTO: pedido.fields.SUBPROYECTO,
+                OP: pedido.fields.OP,
+                INSUMOS: map_insumos,
+                TIPO: pedido.fields.TIPO,
+                SOLICITANTE: pedido.fields.SOLICITANTE,
+            }
+
+            return res.status(200).send(pedido_send);
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }      
+    }
 }
 
 module.exports = controller;
