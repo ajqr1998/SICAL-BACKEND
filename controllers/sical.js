@@ -293,12 +293,18 @@ var controller = {
             const insumosNuevosIds = [];
 
             const insNuevosProductos = await Promise.all(insumosNuevos.map(async (insumo) => {
-                const record = await baseBodega('INSUMOS').create({
+                const insumoData = {
                     DESCRIPCION: insumo.fields.DESCRIPCION,
                     NUEVO: true,
                     MODELO: insumo.fields.MODELO,
-                    MARCA: insumo.fields.MARCA,
-                },{typecast: true});
+                };
+            
+                // Solo agregar MARCA si está presente y no está vacío
+                if (insumo.fields.MARCA) {
+                    insumoData.MARCA = insumo.fields.MARCA;
+                }
+            
+                const record = await baseBodega('INSUMOS').create(insumoData, { typecast: true });
                 return {
                     id: record.id,
                     cantidad: insumo.fields.COMPRA
