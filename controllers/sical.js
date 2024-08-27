@@ -159,7 +159,10 @@ var controller = {
         try {
             const proyectos = await baseProyectos('PROYECTOS').select().all();
             const map_proyectos = proyectos.map(record => {
-                return record.fields.PROYECTO;
+                return {
+                    ID: record.id,
+                    PROYECTO: record.fields.PROYECTO
+                }
             });
             return res.status(200).send(map_proyectos);
         } catch (error) {
@@ -352,7 +355,6 @@ var controller = {
             const id = req.params.id;
 
             const pedido = await baseBodega('PEDIDOS').find(id);
-            console.log(pedido.fields);
 
             const ins_adi = await baseBodega('INSUMOS_PEDIDOS').select({
                 filterByFormula: `{PEDIDO} = "${pedido.fields.PEDIDO}"`
@@ -554,6 +556,139 @@ var controller = {
             console.log(error);
             return res.status(500).send({error: error.message});
         }      
+    },
+    //COTIZACION
+    getCotizacion: async function(req, res){
+        try {
+            const recordId = req.params.id;
+            // Obtener el registro principal
+            const record = await baseVentas('COTIZACIONES').find(recordId);
+
+            let hojasCostosIds = record.get('HOJA_COSTOS');
+            let hojasCostos = [];
+
+            if (hojasCostosIds && hojasCostosIds.length > 0) {
+                // Obtener detalles de cada hoja de costos
+                hojasCostos = await Promise.all(hojasCostosIds.map(async (hojaCostoId) => {
+                    const hojaCostoRecord = await baseVentas('HOJA_COSTOS').find(hojaCostoId);
+    
+                    const materialesInsumosIds = hojaCostoRecord.get('MATERIALES_INSUMOS') || [];
+                    const manoObraIds = hojaCostoRecord.get('MANO_OBRA') || [];
+    
+                    const materialesInsumosDetalles = await Promise.all(materialesInsumosIds.map(async (id) => {
+                        const record = await baseVentas('MATERIALES_INSUMOS').find(id);
+                        const detNiv2MatInsIds = record.get('DET_NIV2_MAT_INS') || [];
+    
+                        const detNiv2MatInsDetalles = await Promise.all(detNiv2MatInsIds.map(async (detId) => {
+                            const detRecord = await baseVentas('DET_NIV2_MAT_INS').find(detId);
+                            return {
+                                ID: detRecord.id,
+                                DESCRIPCION: detRecord.get('DESCRIPCION'),
+                                PVP: detRecord.get('PVP'),
+                                DESC_PROV: detRecord.get('DESC_PROV'),
+                                DESC_MATERIAL: detRecord.get('DESC_MATERIAL'),
+                                COSTO_UNIT: detRecord.get('COSTO_UNIT'),
+                                RENT_MATERIAL: detRecord.get('RENT_MATERIAL'),
+                                CANTIDAD: detRecord.get('CANTIDAD'),
+                                COSTO_TOTAL: detRecord.get('COSTO_TOTAL'),
+                                PRECIO_UNIT: detRecord.get('PRECIO_UNIT'),
+                                PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL')
+                            };
+                        }));
+    
+                        return {
+                            ID: record.id,
+                            TIPO_NIVEL2: record.get('TIPO_NIVEL2'),
+                            DESCRIPCION: record.get('DESCRIPCION'),
+                            COSTO_TOTAL: record.get('COSTO_TOTAL'),
+                            PRECIO_TOTAL: record.get('PRECIO_TOTAL'),
+                            DET_NIV2_MAT_INS: detNiv2MatInsDetalles,
+    
+                        };
+                    }));
+    
+                    const manoObraDetalles = await Promise.all(manoObraIds.map(async (id) => {
+                        const record = await baseVentas('MANO_OBRA').find(id);
+                        const detNiv2MOBRAIds = record.get('DET_NIV2_M_OBRA') || [];
+    
+                        const detNiv2MOBRADetalles = await Promise.all(detNiv2MOBRAIds.map(async (detId) => {
+                            const detRecord = await baseVentas('DET_NIV2_M_OBRA').find(detId);
+                            return {
+                                ID: detRecord.id,
+                                RENT_HC: detRecord.get('RENT_HC'),
+                                DESC_M_OBRA: detRecord.get('DESCRIP_M_OBRA'),
+                                COSTO_HORA: detRecord.get('COSTO_HORA'),
+                                PRECIO_HORA: detRecord.get('PRECIO_HORA'),
+                                CANTIDAD: detRecord.get('CANTIDAD'),
+                                COSTO_TOTAL: detRecord.get('COSTO_TOTAL'),
+                                PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL'),
+                                DESCRIPCION: detRecord.get('DESCRIPCION')
+                            };
+                        }));
+    
+                        return {
+                            ID: record.id,
+                            TIPO_NIVEL2: record.get('TIPO_NIVEL2'),
+                            PRECIO_TOTAL: record.get('PRECIO_TOTAL'),
+                            DET_NIV2_M_OBRA: detNiv2MOBRADetalles,
+                            DESCRIPCION: record.get('DESCRIPCION'),
+                            COSTO_TOTAL: record.get('COSTO_TOTAL'),
+                        };
+                    }));
+    
+                    return {
+                        ID: hojaCostoRecord.id,
+                        NOMBRE: hojaCostoRecord.get('NOMBRE'),
+                        DESCRIPCION: hojaCostoRecord.get('DESCRIPCION'),
+                        MATERIALES_INSUMOS: materialesInsumosDetalles,
+                        MANO_OBRA: manoObraDetalles,
+                        RENT_HC: hojaCostoRecord.get('RENT_HC'),
+                        DESC_HC: hojaCostoRecord.get('DESC_HC'),
+                        COSTO_TOT_MATERIAL: hojaCostoRecord.get('COSTO_TOT_MATERIAL'),
+                        TOTAL_MATERIALES: hojaCostoRecord.get('TOTAL_MATERIALES'),
+                        COSTO_TOT_MANO_OBRA: hojaCostoRecord.get('COSTO_TOT_MANO_OBRA'),
+                        TOTAL_MANO_OBRA: hojaCostoRecord.get('TOTAL_MANO_OBRA'),
+                        COSTO_UNIT_HC: hojaCostoRecord.get('COSTO_UNIT_HC'),
+                        VAL_UNIT_HC: hojaCostoRecord.get('VAL_UNIT_HC'),
+                        CANTIDAD: hojaCostoRecord.get('CANTIDAD'),
+                        COSTO_SUBTOT_HC: hojaCostoRecord.get('COSTO_SUBTOT_HC'),
+                        SUBTOTAL_HC: hojaCostoRecord.get('SUBTOTAL_HC'),
+                        IMG_HOJA_COSTO: hojaCostoRecord.get('IMG_HOJA_COSTO')
+                    };
+                }));
+            }
+
+            const registroJSON = {
+                ID: record.id,
+                CODIGO: record.get('CODIGO'),
+                HOJA_COSTOS: hojasCostos,
+                SUBTOTAL_COT: record.get('SUBTOTAL_COT'),
+                IVA_COT: record.get('IVA_COT'),
+                TOTAL_COT: record.get('TOTAL_COT'),
+                DESCRIPCION_COTIZACION: record.get('DESCRIPCION_COTIZACION'),
+                NOMBRE_COMERCIAL_CLIENTE: record.get('NOMBRE_COMERCIAL_CLIENTE'),
+                NOMBRE_OPORTUNIDAD: record.get('NOMBRE_OPORTUNIDAD'),
+                FORMA_PAGO: record.get('FORMA_PAGO'),
+                TIEMPO_ENTREGA: record.get('TIEMPO_ENTREGA'),
+                LUGAR_ENTREGA: record.get('LUGAR_ENTREGA'),
+                VALIDEZ: record.get('VALIDEZ'),
+                GARANTIA: record.get('GARANTIA'),
+                COSTO_SUBTOT_COT: record.get('COSTO_SUBTOT_COT'),
+                RENT_REAL_COT: record.get('RENT_REAL_COT'),
+                DOCUMENTOS_REFERENCIA: record.get('DOCUMENTOS_REFERENCIA'),
+                INCLUYE: record.get('INCLUYE'),
+                NO_INCLUYE: record.get('NO_INCLUYE'),
+                IMG_REF: record.get('IMG_REF'),
+                GARANTIA_ADJUNTA: record.get('GARANTIA_ADJUNTA'),
+                COTIZADOR: record.get('VENDEDOR_FORMATO_COTIZACION'),
+                DESCUENTO: record.get('DESCUENTO')
+            };
+
+            return res.status(200).send(registroJSON);
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
     }
 }
 

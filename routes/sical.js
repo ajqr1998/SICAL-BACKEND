@@ -51,5 +51,9 @@ router.put('/orden-compra/:id', SicalContoller.updateOrdenCompra);
 //get pedido de compras
 router.get('/pedido-compras/:id', SicalContoller.getPedidoOC);
 
+//Cotizacion------------------------------------
+//get Cotizacion
+router.get('/cotizacion/:id', SicalContoller.getCotizacion);
+
 
 module.exports = router;
