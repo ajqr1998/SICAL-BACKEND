@@ -592,7 +592,10 @@ var controller = {
                                 CANTIDAD: detRecord.get('CANTIDAD'),
                                 COSTO_TOTAL: detRecord.get('COSTO_TOTAL'),
                                 PRECIO_UNIT: detRecord.get('PRECIO_UNIT'),
-                                PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL')
+                                PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL'),
+                                INSUMOS: detRecord.get('INSUMOS'),
+                                DESC_ESPECIFICO: detRecord.get('DESC_ESPECIFICO'),
+                                RENT_ESPECIFICA: detRecord.get('RENT_ESPECIFICA'),
                             };
                         }));
     
@@ -603,7 +606,6 @@ var controller = {
                             COSTO_TOTAL: record.get('COSTO_TOTAL'),
                             PRECIO_TOTAL: record.get('PRECIO_TOTAL'),
                             DET_NIV2_MAT_INS: detNiv2MatInsDetalles,
-    
                         };
                     }));
     
@@ -622,7 +624,8 @@ var controller = {
                                 CANTIDAD: detRecord.get('CANTIDAD'),
                                 COSTO_TOTAL: detRecord.get('COSTO_TOTAL'),
                                 PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL'),
-                                DESCRIPCION: detRecord.get('DESCRIPCION')
+                                DESCRIPCION: detRecord.get('DESCRIPCION'),
+                                HORA_M_OBRA: detRecord.get('HORA_M_OBRA'),
                             };
                         }));
     
@@ -635,6 +638,13 @@ var controller = {
                             COSTO_TOTAL: record.get('COSTO_TOTAL'),
                         };
                     }));
+
+                    const img_hoja_costos = hojaCostoRecord.get('IMG_HOJA_COSTO') ? hojaCostoRecord.get('IMG_HOJA_COSTO').map(image => {
+                        // Procesa cada imagen aquí
+                        return {
+                            url: image.url,
+                        };
+                    }) : [];
     
                     return {
                         ID: hojaCostoRecord.id,
@@ -653,10 +663,16 @@ var controller = {
                         CANTIDAD: hojaCostoRecord.get('CANTIDAD'),
                         COSTO_SUBTOT_HC: hojaCostoRecord.get('COSTO_SUBTOT_HC'),
                         SUBTOTAL_HC: hojaCostoRecord.get('SUBTOTAL_HC'),
-                        IMG_HOJA_COSTO: hojaCostoRecord.get('IMG_HOJA_COSTO')
+                        IMG_HOJA_COSTO: img_hoja_costos
                     };
                 }));
             }
+
+            const imgs_ref = record.get('IMG_REF') ? record.get('IMG_REF').map(image => {
+                return {
+                    url: image.url,
+                };
+            }): [];
 
             const registroJSON = {
                 ID: record.id,
@@ -678,10 +694,35 @@ var controller = {
                 DOCUMENTOS_REFERENCIA: record.get('DOCUMENTOS_REFERENCIA'),
                 INCLUYE: record.get('INCLUYE'),
                 NO_INCLUYE: record.get('NO_INCLUYE'),
-                IMG_REF: record.get('IMG_REF'),
+                IMG_REF: imgs_ref,
                 GARANTIA_ADJUNTA: record.get('GARANTIA_ADJUNTA'),
                 COTIZADOR: record.get('VENDEDOR_FORMATO_COTIZACION'),
-                DESCUENTO: record.get('DESCUENTO')
+                DESCUENTO: record.get('DESCUENTO'),
+                CAR_FIS_PRY_PROD: record.get('CAR_FIS_PRY_PROD'),
+                CAR_FUN_PROD: record.get('CAR_FUN_PROD'),
+                REQ_LEGALES: record.get('REQ_LEGALES'),
+                ALCANCE: record.get('ALCANCE') || false,
+                NECESIDADES: record.get('NECESIDADES') || false,
+                CARAC_FIS: record.get('CARAC_FIS') || false,
+                CARAC_FUN: record.get('CARAC_FUN') || false,
+                SUG_INNOV: record.get('SUG_INNOV') || false,
+                SELECT_BEST_INNO: record.get('SELECT_BEST_INNO') || false,
+                REALIZAR_DIB_PLANOS: record.get('REALIZAR_DIB_PLANOS') || false,
+                REALIZAR_PROTOTIPO: record.get('REALIZAR_PROTOTIPO') || false,
+                ANALIZAR_PROTOTIPOS: record.get('ANALIZAR_PROTOTIPOS') || false,
+                PLANTEAR_MEJORAS: record.get('PLANTEAR_MEJORAS') || false,
+                REALIZAR_CORRECCIONES: record.get('REALIZAR_CORRECCIONES') || false,
+                RECTIFICAR_PLANOS: record.get('RECTIFICAR_PLANOS') || false,
+                APROBACION_DISENO: record.get('APROBACION_DISENO') || false,
+                APROBACION_CONSTRUCCION: record.get('APROBACION_CONSTRUCCION') || false,
+                ASIG_COD_PRODUCTO: record.get('ASIG_COD_PRODUCTO') || false,
+                ASIG_COD_OP: record.get('ASIG_COD_OP') || false,
+                OBS_DEFINIR: record.get('OBS_DEFINIR'),
+                OBS_INNOVAR: record.get('OBS_INNOVAR'),
+                OBS_DISENAR: record.get('OBS_DISENAR'),
+                OBS_OPTIMIZAR: record.get('OBS_OPTIMIZAR'),
+                OBS_VALIDAR: record.get('OBS_VALIDAR'),
+                OBS_CODIFICAR: record.get('OBS_CODIFICAR'),
             };
 
             return res.status(200).send(registroJSON);
@@ -692,10 +733,41 @@ var controller = {
     },
     crearCotizacion: async function(req, res){
         try {
-            const img_ref = req.body.IMG_REF;
-            await baseVentas('COTIZACIONES').create({
-                IMG_REF: img_ref
-            });
+            const cotizacion = req.body
+            const createdCotizacion = await baseVentas('COTIZACIONES').create(cotizacion.fields);
+
+            await Promise.all(cotizacion.HOJA_COSTOS.map(async (hojaCosto) => {
+                const hojaCostoCreated = await baseVentas('HOJA_COSTOS').create({
+                    ...hojaCosto.fields,
+                    COTIZACIONES: [createdCotizacion.id]
+                });
+
+                await Promise.all(hojaCosto.MATERIALES_INSUMOS.map(async (materialInsumo) => {
+                    const materialInsumoCreated = await baseVentas('MATERIALES_INSUMOS').create({
+                        ...materialInsumo.fields,
+                        HOJA_COSTOS: [hojaCostoCreated.id]
+                    });
+                    await Promise.all(materialInsumo.DET_NIV2_MAT_INS.map(async (detNiv2MatIns) => {
+                        await baseVentas('DET_NIV2_MAT_INS').create({
+                            ...detNiv2MatIns,
+                            MATERIALES_INSUMOS: [materialInsumoCreated.id]
+                        });
+                    }));
+                }));
+
+                await Promise.all(hojaCosto.MANO_OBRA.map(async (manoObra) => {
+                    const manoObraCreated = await baseVentas('MANO_OBRA').create({
+                        ...manoObra.fields,
+                        HOJA_COSTOS: [hojaCostoCreated.id]
+                    });
+                    await Promise.all(manoObra.DET_NIV2_M_OBRA.map(async (detNiv2MOBRA) => {
+                        await baseVentas('DET_NIV2_M_OBRA').create({
+                            ...detNiv2MOBRA,
+                            MANO_OBRA: [manoObraCreated.id]
+                        });
+                    }));
+                }));
+            }));
 
             return res.status(200).send({message: "Cotización creada"});
             
