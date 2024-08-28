@@ -689,6 +689,39 @@ var controller = {
             console.log(error);
             return res.status(500).send({error: error.message});
         }
+    },
+    crearCotizacion: async function(req, res){
+        try {
+            const img_ref = req.body.IMG_REF;
+            await baseVentas('COTIZACIONES').create({
+                IMG_REF: img_ref
+            });
+
+            return res.status(200).send({message: "Cotización creada"});
+            
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
+    },
+    getRequerimientos: async function(req, res){
+        try {
+            const requerimientos = await baseVentas('CRM').select({
+                sort: [{field: 'CODIGO', direction: 'asc'}]
+            }).all();
+            const map_requerimientos = requerimientos.map(record => {
+                return {
+                    ID: record.id,
+                    CODIGO: record.fields.CODIGO,
+                    NOMBRE: record.fields.NOMBRE_PRY,
+                }
+            });
+            return res.status(200).send(map_requerimientos);
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
     }
 }
 
