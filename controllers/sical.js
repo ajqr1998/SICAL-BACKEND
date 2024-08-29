@@ -369,10 +369,10 @@ var controller = {
                 }
                 return {
                     ID: record.id,
-                    DESCRIPCION: record.fields.DESCRIPCION,
+                    DESCRIPCION: record.fields.DESCRIPCION || [""],
                     CANTIDAD: record.fields.CANTIDAD,
-                    COD_PROV: record.fields.COD_PROV,
-                    COD_SICAL: record.fields.COD_SICAL,
+                    COD_PROV: record.fields.COD_PROV || [""],
+                    COD_SICAL: record.fields.COD_SICAL || [""],
                     NUEVO: nuevo,
                     
                 }
@@ -380,15 +380,15 @@ var controller = {
 
             const pedido_send = {
                 ID: pedido.id,
-                SUBPROYECTO: pedido.fields.SUBPROYECTO,
-                PROYECTO: pedido.fields.PROYECTOS,
-                OP: pedido.fields.OP,
+                SUBPROYECTO: pedido.fields.SUBPROYECTO || [""],
+                PROYECTO: pedido.fields.PROYECTOS || [""],
+                OP: pedido.fields.OP || [""],
                 PEDIDO: pedido.fields.PEDIDO,
                 INS_ADI: map_ins_adi,
                 FECHA_PEDIDO: pedido.fields.FECHA_PEDIDO,
                 TIPO: pedido.fields.TIPO,
                 SOLICITANTE_VALUE: pedido.fields.SOLICITANTE_VALUE,
-                NOMBRE_PRY: pedido.fields.NOMBRE_PRY,
+                NOMBRE_PRY: pedido.fields.NOMBRE_PRY || [""],
                 ESTADO_APROBACION: pedido.fields.ESTADO_APROBACION,
             }
 
@@ -583,17 +583,17 @@ var controller = {
                             const detRecord = await baseVentas('DET_NIV2_MAT_INS').find(detId);
                             return {
                                 ID: detRecord.id,
-                                DESCRIPCION: detRecord.get('DESCRIPCION'),
+                                DESCRIPCION: detRecord.get('DESCRIPCION') || [""],
                                 PVP: detRecord.get('PVP'),
-                                DESC_PROV: detRecord.get('DESC_PROV'),
-                                DESC_MATERIAL: detRecord.get('DESC_MATERIAL'),
+                                DESC_PROV: detRecord.get('DESC_PROV') || [0],
+                                DESC_MATERIAL: detRecord.get('DESC_MATERIAL') || [0],
                                 COSTO_UNIT: detRecord.get('COSTO_UNIT'),
-                                RENT_MATERIAL: detRecord.get('RENT_MATERIAL'),
+                                RENT_MATERIAL: detRecord.get('RENT_MATERIAL') || [0],
                                 CANTIDAD: detRecord.get('CANTIDAD'),
                                 COSTO_TOTAL: detRecord.get('COSTO_TOTAL'),
                                 PRECIO_UNIT: detRecord.get('PRECIO_UNIT'),
                                 PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL'),
-                                INSUMOS: detRecord.get('INSUMOS'),
+                                INSUMOS: detRecord.get('INSUMOS') || [""],
                                 DESC_ESPECIFICO: detRecord.get('DESC_ESPECIFICO'),
                                 RENT_ESPECIFICA: detRecord.get('RENT_ESPECIFICA'),
                             };
