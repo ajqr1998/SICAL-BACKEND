@@ -723,6 +723,7 @@ var controller = {
                 OBS_OPTIMIZAR: record.get('OBS_OPTIMIZAR'),
                 OBS_VALIDAR: record.get('OBS_VALIDAR'),
                 OBS_CODIFICAR: record.get('OBS_CODIFICAR'),
+                CODIGO_CRM: record.get('CODIGO_CRM') || [""],
             };
 
             return res.status(200).send(registroJSON);
