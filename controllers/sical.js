@@ -593,7 +593,7 @@ var controller = {
                                 COSTO_TOTAL: detRecord.get('COSTO_TOTAL'),
                                 PRECIO_UNIT: detRecord.get('PRECIO_UNIT'),
                                 PRECIO_TOTAL: detRecord.get('PRECIO_TOTAL'),
-                                INSUMOS: detRecord.get('INSUMOS') || [""],
+                                INSUMOS: detRecord.get('INSUMOS'),
                                 DESC_ESPECIFICO: detRecord.get('DESC_ESPECIFICO'),
                                 RENT_ESPECIFICA: detRecord.get('RENT_ESPECIFICA'),
                             };
