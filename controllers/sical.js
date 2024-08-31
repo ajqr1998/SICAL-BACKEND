@@ -723,7 +723,7 @@ var controller = {
                 OBS_OPTIMIZAR: record.get('OBS_OPTIMIZAR'),
                 OBS_VALIDAR: record.get('OBS_VALIDAR'),
                 OBS_CODIFICAR: record.get('OBS_CODIFICAR'),
-                CODIGO_CRM: record.get('CODIGO_CRM') || [""],
+                CODIGO_CRM: record.get('CODIGO_CRM'),
             };
 
             return res.status(200).send(registroJSON);
@@ -732,49 +732,96 @@ var controller = {
             return res.status(500).send({error: error.message});
         }
     },
-    crearCotizacion: async function(req, res){
-        try {
-            const cotizacion = req.body
-            const createdCotizacion = await baseVentas('COTIZACIONES').create(cotizacion.fields);
+    // crearCotizacion: async function(req, res){
+    //     try {
+    //         const cotizacion = req.body
+    //         const createdCotizacion = await baseVentas('COTIZACIONES').create(cotizacion.fields);
 
-            await Promise.all(cotizacion.HOJA_COSTOS.map(async (hojaCosto) => {
+    //         await Promise.all(cotizacion.HOJA_COSTOS.map(async (hojaCosto) => {
+    //             const hojaCostoCreated = await baseVentas('HOJA_COSTOS').create({
+    //                 ...hojaCosto.fields,
+    //                 COTIZACIONES: [createdCotizacion.id]
+    //             });
+
+    //             await Promise.all(hojaCosto.MATERIALES_INSUMOS.map(async (materialInsumo) => {
+    //                 const materialInsumoCreated = await baseVentas('MATERIALES_INSUMOS').create({
+    //                     ...materialInsumo.fields,
+    //                     HOJA_COSTOS: [hojaCostoCreated.id]
+    //                 });
+    //                 await Promise.all(materialInsumo.DET_NIV2_MAT_INS.map(async (detNiv2MatIns) => {
+    //                     await baseVentas('DET_NIV2_MAT_INS').create({
+    //                         ...detNiv2MatIns,
+    //                         MATERIALES_INSUMOS: [materialInsumoCreated.id]
+    //                     });
+    //                 }));
+    //             }));
+
+    //             await Promise.all(hojaCosto.MANO_OBRA.map(async (manoObra) => {
+    //                 const manoObraCreated = await baseVentas('MANO_OBRA').create({
+    //                     ...manoObra.fields,
+    //                     HOJA_COSTOS: [hojaCostoCreated.id]
+    //                 });
+    //                 await Promise.all(manoObra.DET_NIV2_M_OBRA.map(async (detNiv2MOBRA) => {
+    //                     await baseVentas('DET_NIV2_M_OBRA').create({
+    //                         ...detNiv2MOBRA,
+    //                         MANO_OBRA: [manoObraCreated.id]
+    //                     });
+    //                 }));
+    //             }));
+    //         }));
+
+    //         return res.status(200).send({message: "Cotización creada"});
+            
+    //     } catch (error) {
+    //         console.log(error);
+    //         return res.status(500).send({error: error.message});
+    //     }
+    // },
+    crearCotizacion: async function(req, res) {
+        try {
+            const cotizacion = req.body;
+            const createdCotizacion = await baseVentas('COTIZACIONES').create(cotizacion.fields);
+    
+            for (const hojaCosto of cotizacion.HOJA_COSTOS) {
                 const hojaCostoCreated = await baseVentas('HOJA_COSTOS').create({
                     ...hojaCosto.fields,
                     COTIZACIONES: [createdCotizacion.id]
                 });
-
-                await Promise.all(hojaCosto.MATERIALES_INSUMOS.map(async (materialInsumo) => {
+    
+                for (const materialInsumo of hojaCosto.MATERIALES_INSUMOS) {
                     const materialInsumoCreated = await baseVentas('MATERIALES_INSUMOS').create({
                         ...materialInsumo.fields,
                         HOJA_COSTOS: [hojaCostoCreated.id]
                     });
-                    await Promise.all(materialInsumo.DET_NIV2_MAT_INS.map(async (detNiv2MatIns) => {
+    
+                    for (const detNiv2MatIns of materialInsumo.DET_NIV2_MAT_INS) {
                         await baseVentas('DET_NIV2_MAT_INS').create({
                             ...detNiv2MatIns,
                             MATERIALES_INSUMOS: [materialInsumoCreated.id]
                         });
-                    }));
-                }));
-
-                await Promise.all(hojaCosto.MANO_OBRA.map(async (manoObra) => {
+                    }
+                }
+    
+                for (const manoObra of hojaCosto.MANO_OBRA) {
                     const manoObraCreated = await baseVentas('MANO_OBRA').create({
                         ...manoObra.fields,
                         HOJA_COSTOS: [hojaCostoCreated.id]
                     });
-                    await Promise.all(manoObra.DET_NIV2_M_OBRA.map(async (detNiv2MOBRA) => {
+    
+                    for (const detNiv2MOBRA of manoObra.DET_NIV2_M_OBRA) {
                         await baseVentas('DET_NIV2_M_OBRA').create({
                             ...detNiv2MOBRA,
                             MANO_OBRA: [manoObraCreated.id]
                         });
-                    }));
-                }));
-            }));
-
-            return res.status(200).send({message: "Cotización creada"});
-            
+                    }
+                }
+            }
+    
+            return res.status(200).send({ message: "Cotización creada" });
+    
         } catch (error) {
             console.log(error);
-            return res.status(500).send({error: error.message});
+            return res.status(500).send({ error: error.message });
         }
     },
     getRequerimientos: async function(req, res){
