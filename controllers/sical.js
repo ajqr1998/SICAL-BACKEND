@@ -304,7 +304,7 @@ var controller = {
             
                 // Solo agregar MARCA si está presente y no está vacío
                 if (insumo.fields.MARCA) {
-                    insumoData.MARCA = insumo.fields.MARCA;
+                    insumoData.MARCA_TMP = insumo.fields.MARCA;
                 }
             
                 const record = await baseBodega('INSUMOS').create(insumoData, { typecast: true });
