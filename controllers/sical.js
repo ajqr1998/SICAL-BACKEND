@@ -842,6 +842,65 @@ var controller = {
             console.log(error);
             return res.status(500).send({error: error.message});
         }
+    },
+    getRfp: async function(req,res) {
+        try {
+            const id = req.params.id;
+            const record = await baseVentas('COTIZACIONES').find(id);
+
+            const rfp = {
+                NOMBRE_COMERCIAL: record.fields.NOMBRE_COMERCIAL_CLIENTE? record.fields.NOMBRE_COMERCIAL_CLIENTE[0] : "",
+                COD_BASE_PRY: record.fields.COD_BASE_PRY? record.fields.COD_BASE_PRY[0] : "",
+                FECHA_CREACION: record.fields.FECHA_CREACION_CRM? record.fields.FECHA_CREACION_CRM[0] : "",
+                N_ORDEN_COMPRA: record.fields.N_ORDEN_COMPRA_CRM? record.fields.N_ORDEN_COMPRA_CRM[0] : "",
+                NECESIDADES_CLIENTE: record.fields.NOMBRE_OPORTUNIDAD? record.fields.NOMBRE_OPORTUNIDAD[0] : "",
+                CAR_FIS_PRY_PROD: record.fields.CAR_FIS_PRY_PROD? record.fields.CAR_FIS_PRY_PROD : "",
+                CAR_FUN_PROD: record.fields.CAR_FUN_PROD? record.fields.CAR_FUN_PROD : "",
+                REQ_LEGALES: record.fields.REQ_LEGALES? record.fields.REQ_LEGALES : "",
+                NOMBRE_COTIZADOR: record.fields.NOMBRE_COTIZADOR? record.fields.NOMBRE_COTIZADOR : "",
+                NOMBRE_RESPONSABLE: record.fields.NOMBRE_RESPONSABLE? record.fields.NOMBRE_RESPONSABLE : "",
+                BOSQUEJO: record.fields.BOSQUEJO_RFP? record.fields.BOSQUEJO_RFP : [],
+                ALCANCE: record.fields.ALCANCE? record.fields.ALCANCE : false,
+                NECESIDADES:  record.fields.NECESIDADES? record.fields.NECESIDADES : false,
+                CARAC_FIS: record.fields.CARAC_FIS? record.fields.CARAC_FIS : false,
+                CARAC_FUN: record.fields.CARAC_FUN? record.fields.CARAC_FUN : false,
+                SUG_INNOV: record.fields.SUG_INNOV? record.fields.SUG_INNOV : false,
+                SELECT_BEST_INNO: record.fields.SELECT_BEST_INNO? record.fields.SELECT_BEST_INNO : false,
+                REALIZAR_DIB_PLANOS: record.fields.REALIZAR_DIB_PLANOS? record.fields.REALIZAR_DIB_PLANOS : false,
+                REALIZAR_PROTOTIPO: record.fields.REALIZAR_PROTOTIPO? record.fields.REALIZAR_PROTOTIPO : false,
+                ANALIZAR_PROTOTIPOS: record.fields.ANALIZAR_PROTOTIPOS? record.fields.ANALIZAR_PROTOTIPOS : false,
+                PLANTEAR_MEJORAS: record.fields.PLANTEAR_MEJORAS? record.fields.PLANTEAR_MEJORAS : false,
+                REALIZAR_CORRECCIONES: record.fields.REALIZAR_CORRECCIONES? record.fields.REALIZAR_CORRECCIONES : false,
+                RECTIFICAR_PLANOS: record.fields.RECTIFICAR_PLANOS? record.fields.RECTIFICAR_PLANOS : false,
+                APROBACION_DISENO: record.fields.APROBACION_DISENO? record.fields.APROBACION_DISENO : false,
+                APROBACION_CONSTRUCCION: record.fields.APROBACION_CONSTRUCCION? record.fields.APROBACION_CONSTRUCCION : false,
+                ASIG_COD_PRODUCTO: record.fields.ASIG_COD_PRODUCTO? record.fields.ASIG_COD_PRODUCTO : false,
+                ASIG_COD_OP: record.fields.ASIG_COD_OP? record.fields.ASIG_COD_OP : false,
+                RESPONSABLE_CLIENTE: record.fields.NOMBRE_RESPONSABLE_CLIENTE? record.fields.NOMBRE_RESPONSABLE_CLIENTE[0] : "",
+                TIPO_REQUISITO: record.fields.TIPO_REQUISITO? record.fields.TIPO_REQUISITO[0] : "",
+                COD_PRODUCTO: record.fields.CP? record.fields.CP[0] : "",
+                CORREO_RESPONSABLE_CLIENTE: record.fields.CORREO_RESPONSABLE_CLIENTE? record.fields.CORREO_RESPONSABLE_CLIENTE[0] : "",
+                CELULAR_RESPONSABLE_CLIENTE: record.fields.CELULAR_RESPONSABLE_CLIENTE? record.fields.CELULAR_RESPONSABLE_CLIENTE[0] : "",
+                OBS_DEFINIR: record.fields.OBS_DEFINIR? record.fields.OBS_DEFINIR : "",
+                OBS_INNOVAR: record.fields.OBS_INNOVAR? record.fields.OBS_INNOVAR : "",
+                OBS_DISENAR: record.fields.OBS_DISENAR? record.fields.OBS_DISENAR : "",
+                OBS_OPTIMIZAR: record.fields.OBS_OPTIMIZAR? record.fields.OBS_OPTIMIZAR : "",
+                OBS_VALIDAR: record.fields.OBS_VALIDAR? record.fields.OBS_VALIDAR : "",
+                OBS_CODIFICAR : record.fields.OBS_CODIFICAR? record.fields.OBS_CODIFICAR : "",
+                OBS_FIRMAS: record.fields.OBS_FIRMAS? record.fields.OBS_FIRMAS : "",
+                VALIDACION_CLIENTE: record.fields.VALIDACION_CLIENTE? record.fields.VALIDACION_CLIENTE : "",
+                DISENO: record.fields.DISENO? record.fields.DISENO[0] : false,
+                OP_MECANICO_PRY: record.fields.OP_MECANICO_PRY? record.fields.OP_MECANICO_PRY : [],
+                OP_ELECTRICO_PRY: record.fields.OP_ELECTRICO_PRY? record.fields.OP_ELECTRICO_PRY : []
+
+            }
+
+            return res.status(200).send(rfp);
+
+        } catch (error){
+            console.log(error);
+            return res.status(500).send({error: error.message});
+        }
     }
 }
 

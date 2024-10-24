@@ -62,5 +62,10 @@ router.post('/cotizacion', SicalContoller.crearCotizacion);
 //get Requerimientos
 router.get('/requerimientos', SicalContoller.getRequerimientos);
 
+//*************  RFP  ***************/
+router.get('/get-rfp/:id', SicalContoller.getRfp);
+
+//
+
 
 module.exports = router;
