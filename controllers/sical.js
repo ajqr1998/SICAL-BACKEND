@@ -850,7 +850,7 @@ var controller = {
 
             const rfp = {
                 NOMBRE_COMERCIAL: record.fields.NOMBRE_COMERCIAL_CLIENTE? record.fields.NOMBRE_COMERCIAL_CLIENTE[0] : "",
-                COD_BASE_PRY: record.fields.COD_BASE_PRY? record.fields.COD_BASE_PRY[0] : "",
+                COD_BASE_PRY: record.fields.COD_BASE_PRY && record.fields.COD_BASE_PRY[0] ? record.fields.COD_BASE_PRY[0] : "",
                 FECHA_CREACION: record.fields.FECHA_CREACION_CRM? record.fields.FECHA_CREACION_CRM[0] : "",
                 N_ORDEN_COMPRA: record.fields.N_ORDEN_COMPRA_CRM? record.fields.N_ORDEN_COMPRA_CRM[0] : "",
                 NECESIDADES_CLIENTE: record.fields.NOMBRE_OPORTUNIDAD? record.fields.NOMBRE_OPORTUNIDAD[0] : "",
@@ -888,7 +888,7 @@ var controller = {
                 OBS_VALIDAR: record.fields.OBS_VALIDAR? record.fields.OBS_VALIDAR : "",
                 OBS_CODIFICAR : record.fields.OBS_CODIFICAR? record.fields.OBS_CODIFICAR : "",
                 OBS_FIRMAS: record.fields.OBS_FIRMAS? record.fields.OBS_FIRMAS : "",
-                VALIDACION_CLIENTE: record.fields.VALIDACION_CLIENTE? record.fields.VALIDACION_CLIENTE : "",
+                VALIDACION_CLIENTE: record.fields.VALIDACION_CLIENTE? record.fields.VALIDACION_CLIENTE : true,
                 DISENO: record.fields.DISENO? record.fields.DISENO[0] : false,
                 OP_MECANICO_PRY: record.fields.OP_MECANICO_PRY? record.fields.OP_MECANICO_PRY : [],
                 OP_ELECTRICO_PRY: record.fields.OP_ELECTRICO_PRY? record.fields.OP_ELECTRICO_PRY : []
